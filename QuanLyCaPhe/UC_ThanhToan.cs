@@ -26,7 +26,6 @@ namespace QuanLyCaPhe
             rdoChuyenKhoan.CheckedChanged += PhuongThuc_CheckedChanged;
         }
 
-        // Nhận dữ liệu từ UC_BanHang
         public void NhanDuLieuThanhToan(
             List<MonThanhToan> dsMon,
             string tenBanDuocChon)
@@ -46,7 +45,6 @@ namespace QuanLyCaPhe
 
             TinhTongTien();
 
-            // Nếu giao diện có label tên bàn thì cập nhật
             foreach (Control c in Controls)
             {
                 if (c is Label lbl && lbl.Name == "lblTenBan")
@@ -58,7 +56,6 @@ namespace QuanLyCaPhe
             }
         }
 
-        // Tạo dòng món tự động trong FlowLayoutPanel
         private void ThemDongMon(MonThanhToan mon)
         {
             Panel dong = new Panel();
@@ -98,7 +95,7 @@ namespace QuanLyCaPhe
             flpChiTietMon.Controls.Add(dong);
         }
 
-        // Tính tổng tiền
+        // tính tổng tiền
         private void TinhTongTien()
         {
             tongTien = 0;
@@ -114,7 +111,7 @@ namespace QuanLyCaPhe
             TinhTienThua();
         }
 
-        // Khi khách nhập tiền
+        // tính tiền thừa
         private void txtTienKhachDua_TextChanged(object sender, EventArgs e)
         {
             TinhTienThua();
@@ -138,19 +135,21 @@ namespace QuanLyCaPhe
             txtTienThua.Text = tienThua.ToString("#,##0", cul) + "đ";
         }
 
-        // Xử lý phương thức thanh toán
+        // xử lý pthuc thanh toán
         private void PhuongThuc_CheckedChanged(object sender, EventArgs e)
         {
+            // chọn ck tự điền tổng tiền và khóa ô nhập
             if (rdoChuyenKhoan.Checked)
             {
                 txtTienKhachDua.Text = tongTien.ToString("0");
                 txtTienKhachDua.Enabled = false;
             }
+            // nếu chọn tiền mặt cho phép nhập số tiền khách đưa
             else if (rdoTienMat.Checked)
             {
                 txtTienKhachDua.Enabled = true;
             }
-
+            // cập nhật số tiền thừa
             TinhTienThua();
         }
 
@@ -160,21 +159,21 @@ namespace QuanLyCaPhe
 
         private void btnXacNhanIn_Click(object sender, EventArgs e)
         {
-            // 1. Kiểm tra danh sách món
+            // ktra danh sách món
             if (danhSachMon == null || danhSachMon.Count == 0)
             {
                 MessageBox.Show("Chưa có món trong hóa đơn!");
                 return;
             }
 
-            // 2. Kiểm tra phương thức thanh toán
+            // ktra phương thức thanh toán
             if (!rdoTienMat.Checked && !rdoChuyenKhoan.Checked)
             {
                 MessageBox.Show("Vui lòng chọn phương thức thanh toán!");
                 return;
             }
 
-            // 3. Lấy tiền khách đưa
+            // lấy tiền khách đưa
             decimal tienKhachDua = 0;
 
             string chuoiTien = txtTienKhachDua.Text.Trim();
@@ -185,14 +184,14 @@ namespace QuanLyCaPhe
 
             decimal.TryParse(soTien, out tienKhachDua);
 
-            // 4. Kiểm tra tiền khách đưa
+            // ktra tiền khách đưa
             if (rdoTienMat.Checked && tienKhachDua < tongTien)
             {
                 MessageBox.Show("Tiền khách đưa chưa đủ!");
                 return;
             }
 
-            // Chuyển khoản: mặc định thanh toán đúng tổng tiền
+            // mặc định thanh toán đúng tổng tiền khi CK
             if (rdoChuyenKhoan.Checked)
             {
                 tienKhachDua = tongTien;
@@ -221,7 +220,7 @@ namespace QuanLyCaPhe
                     {
                         try
                         {
-                            // 5. Lưu hóa đơn
+                            // lưu HĐ
                             string queryHoaDon = @"
                         INSERT INTO HoaDon
                         (
@@ -280,7 +279,7 @@ namespace QuanLyCaPhe
                                 maHoaDon = (int)cmd.ExecuteScalar();
                             }
 
-                            // 6. Lưu chi tiết từng món
+                            // lưu chi tiết từng món
                             string queryChiTiet = @"
                         INSERT INTO ChiTietHoaDon
                         (
@@ -333,11 +332,10 @@ namespace QuanLyCaPhe
                                     cmd.ExecuteNonQuery();
                                 }
                             }
-
-                            // 7. Hoàn tất giao dịch SQL
+                      
                             transaction.Commit();
 
-                            // 8. Thông báo thanh toán thành công
+                            // thông báo thành công
                             MessageBox.Show(
                                 "Thanh toán thành công!\n" +
                                 "Mã hóa đơn: " + maHoaDon +
@@ -350,7 +348,7 @@ namespace QuanLyCaPhe
                         }
                         catch
                         {
-                            // Có lỗi thì hoàn tác giao dịch
+                            // có lỗi thì hoàn tác giao dịch
                             transaction.Rollback();
 
                             throw;
@@ -358,8 +356,7 @@ namespace QuanLyCaPhe
                     }
                 }
 
-                // 9. Sau khi lưu hóa đơn thành công
-                // Tạo màn hình bán hàng mới, giỏ hàng trống
+                // sau khi lưu hđ thành công thì tạo màn hình bán hàng mới
                 Form1 form = this.FindForm() as Form1;
 
                 if (form != null)
