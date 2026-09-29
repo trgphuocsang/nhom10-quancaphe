@@ -70,9 +70,9 @@ namespace QuanLyCaPhe
             }
         }
 
-        private void PanelCard_Click(object sender, EventArgs e)
+        private void PanelCard_Click(object? sender, EventArgs e)
         {
-            Panel clickedPanel = null;
+            Panel? clickedPanel = null;
 
             if (sender is Panel pnl)
             {
@@ -254,7 +254,7 @@ namespace QuanLyCaPhe
 
         private void ThemMonVaoHoaDon(string tenMon, decimal donGia)
         {
-            // ktra trong flpHoaDon đã có món này chưa, nếu có rồi thì tăng số lượng lên 1
+            // ktra trong flpHoaDon có món này chưa, nếu có rồi thì tăng số lượng lên 1
             foreach (Control ctrl in flpHoaDon.Controls)
             {
                 if (ctrl is UC_ItemHoaDon item && item.TenMon == tenMon)
@@ -420,7 +420,7 @@ namespace QuanLyCaPhe
 
         private void btnThanhToan_Click(object sender, EventArgs e)
         {
-            // 1. Kiểm tra hóa đơn có món chưa
+            // ktra hđ có món chưa
             if (flpHoaDon.Controls.Count == 0)
             {
                 MessageBox.Show(
@@ -431,7 +431,7 @@ namespace QuanLyCaPhe
                 return;
             }
 
-            // 2. Kiểm tra đã chọn bàn chưa
+            // ktra đã chọn bàn chưa
             if (string.IsNullOrWhiteSpace(banDangChon))
             {
                 MessageBox.Show(
@@ -442,7 +442,7 @@ namespace QuanLyCaPhe
                 return;
             }
 
-            // 3. Lấy danh sách món từ hóa đơn bán hàng
+            // lấy danh sách món từ hóa đơn
             List<MonThanhToan> dsMon = new List<MonThanhToan>();
 
             foreach (Control ctrl in flpHoaDon.Controls)
@@ -471,12 +471,12 @@ namespace QuanLyCaPhe
                 }
             }
 
-            // 4. Tạo màn hình thanh toán và truyền dữ liệu
+            // tạo màn hình thanh toán, truyền dữ liệu
             UC_ThanhToan ucThanhToan = new UC_ThanhToan();
 
             ucThanhToan.NhanDuLieuThanhToan(dsMon, banDangChon);
 
-            // 5. Mở màn hình thanh toán trên Form1
+            // mở màn hình thanh toán
             Form1 formChinh = this.FindForm() as Form1;
 
             if (formChinh != null)
