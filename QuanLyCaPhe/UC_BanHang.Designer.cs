@@ -1207,6 +1207,7 @@
             btnThanhToan.TabIndex = 5;
             btnThanhToan.Text = "💵  Thanh toán";
             btnThanhToan.UseVisualStyleBackColor = false;
+            btnThanhToan.Click += btnThanhToan_Click;
             // 
             // btnHuyHD
             // 

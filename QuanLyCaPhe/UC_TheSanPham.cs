@@ -7,8 +7,7 @@ namespace QuanLyCaPhe
     public partial class UC_TheSanPham : UserControl
     {
         // khai báo sự kiện khi bấm vào sản phẩm
-        public event EventHandler OnChonSanPham;
-
+        public event EventHandler? OnChonSanPham;
         public UC_TheSanPham()
         {
             InitializeComponent();

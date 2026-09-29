@@ -14,6 +14,7 @@ namespace QuanLyCaPhe
     public partial class UC_BanHang : UserControl
     {
         private string banDangChon = "";
+        private int maLoaiDangChon = 1;
         public UC_BanHang()
         {
             InitializeComponent();
@@ -22,6 +23,8 @@ namespace QuanLyCaPhe
 
             txtTimKiem.Enter += txtTimKiem_Enter;
             txtTimKiem.Leave += txtTimKiem_Leave;
+
+            txtTimKiem.TextChanged += txtTimKiem_TextChanged;
         }
 
         private void pnlSearchBox_Paint(object sender, PaintEventArgs e)
@@ -50,7 +53,7 @@ namespace QuanLyCaPhe
                 }
             }
         }
-        private void txtTimKiem_Enter(object sender, EventArgs e)
+        private void txtTimKiem_Enter(object? sender, EventArgs e)
         {
             if (txtTimKiem.Text.Contains("Tìm món"))
             {
@@ -58,7 +61,7 @@ namespace QuanLyCaPhe
                 txtTimKiem.ForeColor = Color.Black;
             }
         }
-        private void txtTimKiem_Leave(object sender, EventArgs e)
+        private void txtTimKiem_Leave(object? sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtTimKiem.Text))
             {
@@ -95,7 +98,7 @@ namespace QuanLyCaPhe
                 // reset bàn bên hóa đơn
                 if (lblTenBan != null)
                 {
-                    lblTenBan.Text = "Chưa chọn"; 
+                    lblTenBan.Text = "Chưa chọn";
                     lblTenBan.ForeColor = Color.Gray;
                 }
                 else
@@ -104,13 +107,13 @@ namespace QuanLyCaPhe
                     {
                         if (box is Label l && l.Name == "lblTenBan")
                         {
-                            l.Text = "Chưa chọn"; 
+                            l.Text = "Chưa chọn";
                             l.ForeColor = Color.Gray;
                             break;
                         }
                     }
                 }
-                return; 
+                return;
             }
 
             // đổi màu các bàn về trạng thái bth
@@ -167,41 +170,14 @@ namespace QuanLyCaPhe
 
         public void LoadMenuTheoDanhMuc(int maLoai)
         {
-            flpMenu.Controls.Clear();
+            maLoaiDangChon = maLoai;
 
-            string query = "SELECT TenMon, Gia, HinhAnh FROM MonAn WHERE MaLoai = " + maLoai;
+            string query = "SELECT TenMon, Gia, HinhAnh FROM MonAn " +
+                           "WHERE MaLoai = " + maLoai;
+
             DataTable dt = DataProvider.Instance.ExecuteQuery(query);
 
-            foreach (DataRow row in dt.Rows)
-            {
-                UC_TheSanPham theSP = new UC_TheSanPham();
-                string tenMon = row["TenMon"].ToString();
-                decimal giaGoc = Convert.ToDecimal(row["Gia"]);
-
-                System.Globalization.CultureInfo cul = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
-                string giaTien = giaGoc.ToString("#,###", cul.NumberFormat) + "đ";
-
-                Image img = null;
-                string tenFileAnh = row["HinhAnh"].ToString();
-
-                if (!string.IsNullOrEmpty(tenFileAnh))
-                {
-                    string duongDanDayDu = System.IO.Path.Combine(Application.StartupPath, "Images", tenFileAnh);
-                    if (System.IO.File.Exists(duongDanDayDu))
-                    {
-                        try { img = CatVaCanhGiuaAnh(duongDanDayDu, 162, 116); } catch { img = null; }
-                    }
-                }
-
-                theSP.GanThongTin(tenMon, giaTien, img);
-
-                theSP.OnChonSanPham += (sender, e) =>
-                {
-                    ThemMonVaoHoaDon(tenMon, giaGoc);
-                };
-
-                flpMenu.Controls.Add(theSP);
-            }
+            HienThiDanhSachMon(dt);
         }
 
         private Image CatVaCanhGiuaAnh(string duongDanFile, int targetWidth, int targetHeight)
@@ -369,6 +345,151 @@ namespace QuanLyCaPhe
 
                 // gọi lại hàm tính tổng tiền
                 TinhTongTien();
+            }
+        }
+
+
+        private void txtTimKiem_TextChanged(object? sender, EventArgs e)
+        {
+            string tuKhoa = txtTimKiem.Text.Trim();
+
+            if (tuKhoa == "Tìm món..." || string.IsNullOrWhiteSpace(tuKhoa))
+            {
+                LoadMenuTheoDanhMuc(maLoaiDangChon);
+                return;
+            }
+
+            // tìm món theo tên 
+            string tuKhoaSQL = tuKhoa.Replace("'", "''");
+
+            string query = "SELECT TenMon, Gia, HinhAnh FROM MonAn " +
+                           "WHERE TenMon LIKE N'%" + tuKhoaSQL + "%'";
+
+            DataTable dt = DataProvider.Instance.ExecuteQuery(query);
+
+            HienThiDanhSachMon(dt);
+        }
+
+        private void HienThiDanhSachMon(DataTable dt)
+        {
+            flpMenu.Controls.Clear();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                UC_TheSanPham theSP = new UC_TheSanPham();
+
+                string tenMon = row["TenMon"].ToString();
+                decimal giaGoc = Convert.ToDecimal(row["Gia"]);
+
+                System.Globalization.CultureInfo cul =
+                    System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+
+                string giaTien = giaGoc.ToString("#,###", cul.NumberFormat) + "đ";
+
+                Image img = null;
+                string tenFileAnh = row["HinhAnh"].ToString();
+
+                if (!string.IsNullOrEmpty(tenFileAnh))
+                {
+                    string duongDanDayDu = System.IO.Path.Combine(
+                        Application.StartupPath, "Images", tenFileAnh);
+
+                    if (System.IO.File.Exists(duongDanDayDu))
+                    {
+                        try
+                        {
+                            img = CatVaCanhGiuaAnh(duongDanDayDu, 162, 116);
+                        }
+                        catch
+                        {
+                            img = null;
+                        }
+                    }
+                }
+
+                theSP.GanThongTin(tenMon, giaTien, img);
+
+                theSP.OnChonSanPham += (sender, e) =>
+                {
+                    ThemMonVaoHoaDon(tenMon, giaGoc);
+                };
+
+                flpMenu.Controls.Add(theSP);
+            }
+        }
+
+        private void btnThanhToan_Click(object sender, EventArgs e)
+        {
+            // 1. Kiểm tra hóa đơn có món chưa
+            if (flpHoaDon.Controls.Count == 0)
+            {
+                MessageBox.Show(
+                    "Vui lòng chọn món trước khi thanh toán!",
+                    "Thông báo",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            // 2. Kiểm tra đã chọn bàn chưa
+            if (string.IsNullOrWhiteSpace(banDangChon))
+            {
+                MessageBox.Show(
+                    "Vui lòng chọn bàn trước khi thanh toán!",
+                    "Thông báo",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            // 3. Lấy danh sách món từ hóa đơn bán hàng
+            List<MonThanhToan> dsMon = new List<MonThanhToan>();
+
+            foreach (Control ctrl in flpHoaDon.Controls)
+            {
+                if (ctrl is UC_ItemHoaDon item)
+                {
+                    int soLuong = 1;
+
+                    foreach (Control sub in item.Controls)
+                    {
+                        if (sub is Label lbl && lbl.Name == "lblSoLuong")
+                        {
+                            int.TryParse(lbl.Text, out soLuong);
+                            break;
+                        }
+                    }
+
+                    MonThanhToan mon = new MonThanhToan()
+                    {
+                        TenMon = item.TenMon,
+                        DonGia = item.DonGia,
+                        SoLuong = soLuong
+                    };
+
+                    dsMon.Add(mon);
+                }
+            }
+
+            // 4. Tạo màn hình thanh toán và truyền dữ liệu
+            UC_ThanhToan ucThanhToan = new UC_ThanhToan();
+
+            ucThanhToan.NhanDuLieuThanhToan(dsMon, banDangChon);
+
+            // 5. Mở màn hình thanh toán trên Form1
+            Form1 formChinh = this.FindForm() as Form1;
+
+            if (formChinh != null)
+            {
+                formChinh.MoManHinhThanhToan(ucThanhToan);
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Không tìm thấy Form1 để mở màn hình thanh toán!",
+                    "Lỗi",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
     }
